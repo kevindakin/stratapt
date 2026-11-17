@@ -949,15 +949,28 @@ function hubspotForms() {
         if (v) fields.push({ objectTypeId: "0-1", name, value: v });
       });
 
+      const get = (id) => fields.find((f) => f.name === id)?.value || "";
+
       // Save name/email/practice so the scheduler on /thank-you can prefill them.
       // Only for forms that collect a first name, so the newsletter form
       // doesn't overwrite a demo prefill with an email-only record.
-      const get = (id) => fields.find((f) => f.name === id)?.value || "";
       if (get("firstname")) {
         try {
           sessionStorage.setItem("hs-prefill", JSON.stringify({
             firstName: get("firstname"), lastName: get("lastname"), email: get("email"),
             company: get("what_is_the_name_of_your_practice"),
+          }));
+        } catch (e) {}
+      }
+
+      // Flag a conversion for the thank-you page to push to GTM.
+      // Non-PII fields only: GA4 prohibits names, emails, phone numbers.
+      if (component.dataset.trackForm) {
+        try {
+          sessionStorage.setItem("demoFormSubmitted", JSON.stringify({
+            form_name: component.dataset.trackForm,
+            practice_model: get("practice_model"),
+            role: get("your_role"),
           }));
         } catch (e) {}
       }
